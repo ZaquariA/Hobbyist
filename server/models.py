@@ -28,7 +28,7 @@ class User(db.Model, SerializerMixin):
         backref=db.backref('friendships', lazy='dynamic')
     )
     user_hobbies = db.relationship('UserHobby', back_populates = "user")
-    # user_posts = db.relationship('UserPosts', back_populates = "user")
+    user_posts = db.relationship('UserPost', back_populates = "user")
 
     serialize_rules = ("-friends.user", "-user.hobbies.user")
 
@@ -65,9 +65,11 @@ class Post(db.Model, SerializerMixin):
     comments = db.Column(db.String)
 
     # post_hobbies = db.relationship("PostHobby", back_populates = "post")
-    # user_posts = db.relationship("UserPost", back_populates = "post")
+    user_posts = db.relationship("UserPost", back_populates = "post")
     
-    # serialize_rules = ("-post_hobbies.post", "-user_posts.post")
+    serialize_rules = ( "-user_posts.post",)
+
+    # "-post_hobbies.post",
 
 class UserHobby(db.Model, SerializerMixin):
     __tablename__ = "user_hobbies"
@@ -81,17 +83,17 @@ class UserHobby(db.Model, SerializerMixin):
     
     serialize_rules = ("-user.user.hobbies", "-hobby.user_hobbies")
 
-# class UserPost(db.Model, SerializerMixin):
-#     __tablename__ = "user_posts"
+class UserPost(db.Model, SerializerMixin):
+    __tablename__ = "user_posts"
 
-#     id = db.Column(db.Integer, primary_key = True)
-#     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-#     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
+    id = db.Column(db.Integer, primary_key = True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
 
-#     user = db.relationship("User", back_populates = "user_posts")
-#     post = db.relationship("Post", back_populates = "user_posts")
+    user = db.relationship("User", back_populates = "user_posts")
+    post = db.relationship("Post", back_populates = "user_posts")
 
-#     serialize_rules = ("-user.user_posts", "-post.user_posts")
+    serialize_rules = ("-user.user_posts", "-post.user_posts")
 
 # class PostHobby(db.Model, SerializerMixin):
 #     __tablename__ = "post_hobbies"
