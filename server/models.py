@@ -27,10 +27,10 @@ class User(db.Model, SerializerMixin):
         secondaryjoin=(friend.c.friend2_id == id),
         backref=db.backref('friendships', lazy='dynamic')
     )
-    # user_hobbies = db.relationship('UserHobby', back_populates = "user")
+    user_hobbies = db.relationship('UserHobby', back_populates = "user")
     # user_posts = db.relationship('UserPosts', back_populates = "user")
 
-    serialize_rules = ("-friends.user",)
+    serialize_rules = ("-friends.user", "-user.hobbies.user")
 
     @validates('email')
     def validate_email(self, key, email):
@@ -47,10 +47,12 @@ class Hobby(db.Model, SerializerMixin):
     image = db.Column(db.String)
     description = db.Column(db.String)
 
-    # user_hobbies = db.relationship('UserHobby', back_populates = "hobby")
+    user_hobbies = db.relationship('UserHobby', back_populates = "hobby")
     # post_hobbies = db.relationship('PostHobby', back_populates = "hobby")
 
-    # serialize_rules = ("-user_hobbies.hobby", "-post_hobbies.hobby")
+    serialize_rules = ("-user_hobbies.hobby", )
+
+    # "-post_hobbies.hobby"
 
     pass
 
@@ -67,17 +69,17 @@ class Post(db.Model, SerializerMixin):
     
     # serialize_rules = ("-post_hobbies.post", "-user_posts.post")
 
-# class UserHobby(db.Model, SerializerMixin):
-#     __tablename__ = "user_hobbies"
+class UserHobby(db.Model, SerializerMixin):
+    __tablename__ = "user_hobbies"
 
-#     id = db.Column(db.Integer, primary_key = True)
-#     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-#     hobby_id = db.Column(db.Integer, db.ForeignKey("hobbies.id"))
+    id = db.Column(db.Integer, primary_key = True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    hobby_id = db.Column(db.Integer, db.ForeignKey("hobbies.id"))
 
-#     user = db.relationship("User", back_populates = "user_hobbies")
-#     hobby = db.relationship("Hobby", back_populates = "user_hobbies")
+    user = db.relationship("User", back_populates = "user_hobbies")
+    hobby = db.relationship("Hobby", back_populates = "user_hobbies")
     
-#     serialize_rules = ("-user.user.hobbies", "-hobby.user_hobbies")
+    serialize_rules = ("-user.user.hobbies", "-hobby.user_hobbies")
 
 # class UserPost(db.Model, SerializerMixin):
 #     __tablename__ = "user_posts"

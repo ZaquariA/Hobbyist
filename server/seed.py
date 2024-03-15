@@ -8,7 +8,7 @@ from faker import Faker
 
 # Local imports
 from app import app
-from models import db, User, Hobby
+from models import db, User, Hobby, Post, UserHobby
 
 
 
@@ -34,9 +34,28 @@ if __name__ == '__main__':
                 description = "We climb rocks"
             )
         ]
+
+        print("Seeding Post...")
+        posts = [
+            Post(
+                image = "string.png",
+                description = "stringy string",
+                comments = "comments about the stringy string string.png"
+            )
+        ]
+
+        print("Seeding UserHobby...")
+        user_hobbies = [
+            UserHobby(
+                user_id = 1,
+                hobby_id = 1
+            )
+        ]
         db.create_all()
-        db.session.add_all(hobbies)
         db.session.add_all(users)
+        db.session.add_all(hobbies)
+        db.session.add_all(posts)
+        db.session.add_all(user_hobbies)
         db.session.commit()
 
     
