@@ -48,11 +48,11 @@ class Hobby(db.Model, SerializerMixin):
     description = db.Column(db.String)
 
     user_hobbies = db.relationship('UserHobby', back_populates = "hobby")
-    # post_hobbies = db.relationship('PostHobby', back_populates = "hobby")
+    post_hobbies = db.relationship('PostHobby', back_populates = "hobby")
 
-    serialize_rules = ("-user_hobbies.hobby", )
+    serialize_rules = ("-user_hobbies.hobby", "-post_hobbies.hobby")
 
-    # "-post_hobbies.hobby"
+
 
     pass
 
@@ -64,12 +64,12 @@ class Post(db.Model, SerializerMixin):
     description = db.Column(db.String)
     comments = db.Column(db.String)
 
-    # post_hobbies = db.relationship("PostHobby", back_populates = "post")
+    post_hobbies = db.relationship("PostHobby", back_populates = "post")
     user_posts = db.relationship("UserPost", back_populates = "post")
     
-    serialize_rules = ( "-user_posts.post",)
+    serialize_rules = ( "-user_posts.post","-post_hobbies.post")
 
-    # "-post_hobbies.post",
+
 
 class UserHobby(db.Model, SerializerMixin):
     __tablename__ = "user_hobbies"
@@ -95,14 +95,14 @@ class UserPost(db.Model, SerializerMixin):
 
     serialize_rules = ("-user.user_posts", "-post.user_posts")
 
-# class PostHobby(db.Model, SerializerMixin):
-#     __tablename__ = "post_hobbies"
+class PostHobby(db.Model, SerializerMixin):
+    __tablename__ = "post_hobbies"
 
-#     id = db.Column(db.Integer, primary_key = True)
-#     post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
-#     hobby_id = db.Column(db.Integer, db.ForeignKey("hobbies.id"))
+    id = db.Column(db.Integer, primary_key = True)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"))
+    hobby_id = db.Column(db.Integer, db.ForeignKey("hobbies.id"))
 
-#     post = db.relationship("Post", back_populates = "post_hobbies")
-#     hobby = db.relationship("Hobby", back_populates = "post_hobbies")
+    post = db.relationship("Post", back_populates = "post_hobbies")
+    hobby = db.relationship("Hobby", back_populates = "post_hobbies")
     
-#     serialize_rules = ("-post.post_hobbies", "-hobby.post_hobbies")
+    serialize_rules = ("-post.post_hobbies", "-hobby.post_hobbies")
