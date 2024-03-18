@@ -8,7 +8,7 @@ from faker import Faker
 
 # Local imports
 from app import app
-from models import db, User, Hobby, Post, UserHobby, UserPost, PostHobby
+from models import *
 
 
 

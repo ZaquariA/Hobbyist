@@ -1,14 +1,21 @@
-#!/usr/bin/env python3
+from flask import Flask, request, make_response, session
+from flask_migrate import Migrate
+from flask_restful import Api, Resource
+from models import *
+import os
 
-# Standard library imports
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE = os.environ.get(
+    "DB_URI", f"sqlite:///{os.path.join(BASE_DIR, 'app.db')}")
 
-# Remote library imports
-from flask import request
-from flask_restful import Resource
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.json.compact = False
 
-# Local imports
-from config import app, db, api
-# Add your model imports
+migrate = Migrate(app, db)
+
+db.init_app(app)
 
 
 # Views go here!
@@ -17,6 +24,225 @@ from config import app, db, api
 def index():
     return '<h1>Project Server</h1>'
 
+@app.route('/check_session', methods=['GET'])
+def check_session():
+    user = User.query.filter(User.id == session.get('user_id')).first()
+    if not user:
+        return make_response({'error': "Unauthorized: you must be logged in to make that request"}, 401)
+    else:
+        return make_response(user.to_dict(), 200)
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    get_json = request.get_json()
+    try:
+        user = User(
+            username=get_json['username'],
+            name=get_json['name'],
+        )
+        user.password_hash = get_json['password']
+        db.session.add(user)
+        db.session.commit()
+        session['user_id'] = user.id
+
+        return make_response(user.to_dict(), 201)
+
+    except Exception as e:
+        return make_response({'errors': str(e)}, 422)
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.get_json()['username']
+
+    user = User.query.filter(User.username == username).first()
+    password = request.get_json()['password']
+
+    if not user:
+        response_body = {'error': 'User not found'}
+        status = 404
+    else:
+        if user.authenticate(password):
+            session['user_id'] = user.id
+            response_body = user.to_dict()
+            status = 200
+        else:
+            response_body = {'error': 'Invalid username or password'}
+            status = 401
+    return make_response(response_body, status)
+
+@app.route('/logout', methods=['DELETE'])
+def logout():
+    session['user_id'] = None
+    return '', 204
+
+@app.route("/users", methods=["GET", "POST"])
+def users():
+    if request.method == "GET":
+        user_list = [user.to_dict(rules =("-user_hobbies", "-user_posts")) for user in User.query.all()]
+        return make_response(user_list, 200)
+    
+    elif request.method == "POST":
+        get_json = request.get_json()
+        try:
+            new_user = User(
+                name = get_json["name"],
+                email = get_json["email"],
+                password = get_json["password"],
+                image = get_json["image"],
+                bio = get_json["bio"]
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            return make_response(new_user.to_dict(rules = ("-user_hobbies", "-user_posts")), 201)
+        except:
+            return make_response({
+                "errors": "validation errors"
+            },400)
+
+@app.route('/users/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+def user_by_id(id):
+    if request.method == 'GET':
+        user = User.query.filter(User.id == id).first()
+        if user:
+            return make_response(user.to_dict(rules=("-user_hobbies", "-user_posts")), 200)
+        else:
+            return make_response({'error': 'user not found'}, 404)
+
+    elif request.method == 'PATCH':
+        user = User.query.filter(User.id == id).first()
+        try:
+            get_json = request.get_json()
+            if user:
+                for attr in get_json:
+                    setattr(user, attr, get_json.get(attr))
+                db.session.add(user)
+                db.session.commit()
+                return make_response(user.to_dict(rules=("-user_hobbies", "-user_posts")), 202)
+            else:
+                return make_response({'error': 'user not found'}, 404)
+        except:
+            return make_response({'errors': 'validation errors'}, 400)
+
+    elif request.method == 'DELETE':
+        user = User.query.filter(User.id == id).first()
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            return make_response({}, 204)
+        else:
+            return make_response({'error': 'user not found'}, 404)
+
+@app.route('/hobbies', methods = ["GET", "POST"])
+def hobbies():
+    if request.method == "GET":
+        hobby_list = [hobby.to_dict(rules = ("-user_hobbies", "-post_hobbies")) for hobby in Hobby.query.all()]
+        return make_response(hobby_list, 200)
+    
+    elif request.method == "POST":
+        get_json = request.get_json()
+        try:
+            new_hobby = Hobby(
+                name = get_json["name"],
+                image = get_json["image"],
+                description = get_json["description"]
+            )
+            db.session.add(new_hobby)
+            db.session.commit()
+            return make_response(new_hobby.to_dict(rules = ("-user_hobbies", "-post_hobbies")), 201)
+        except:
+            return make_response({
+                "errors": "validation errors"
+            }, 400)
+        
+@app.route('/hobbies/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+def hobby_by_id(id):
+    if request.method == 'GET':
+        hobby = Hobby.query.filter(Hobby.id == id).first()
+        if hobby:
+            return make_response(hobby.to_dict(rules=("-user_hobbies", "-post_hobbies")), 200)
+        else:
+            return make_response({'error': 'hobby not found'}, 404)
+
+    elif request.method == 'PATCH':
+        hobby = Hobby.query.filter(Hobby.id == id).first()
+        try:
+            get_json = request.get_json()
+            if hobby:
+                for attr in get_json:
+                    setattr(hobby, attr, get_json.get(attr))
+                db.session.add(hobby)
+                db.session.commit()
+                return make_response(hobby.to_dict(rules=("-user_hobbies", "-post_hobbies")), 202)
+            else:
+                return make_response({'error': 'hobby not found'}, 404)
+        except:
+            return make_response({'errors': 'validation errors'}, 400)
+
+    elif request.method == 'DELETE':
+        hobby = Hobby.query.filter(Hobby.id == id).first()
+        if hobby:
+            db.session.delete(hobby)
+            db.session.commit()
+            return make_response({}, 204)
+        else:
+            return make_response({'error': 'hobby not found'}, 404)
+        
+@app.route('/posts', methods=["GET", "POST"])
+def posts():
+    if request.method == "GET":
+        post_list = [post.to_dict(rules=("-user_posts", "-post_hobbies")) for post in Post.query.all()]
+        return make_response(post_list, 200)
+
+    elif request.method == "POST":
+        get_json = request.get_json()
+        try:
+            new_post = Post(
+                image=get_json["image"],
+                description=get_json["description"],
+                comments=get_json["comments"]
+            )
+            db.session.add(new_post)
+            db.session.commit()
+            return make_response(new_post.to_dict(rules=("-user_posts", "-post_hobbies")), 201)
+        except:
+            return make_response({
+                "errors": "validation errors"
+            }, 400)
+
+
+@app.route('/posts/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+def post_by_id(id):
+    if request.method == 'GET':
+        post = Post.query.filter(Post.id == id).first()
+        if post:
+            return make_response(post.to_dict(rules=("-user_posts", "-post_hobbies")), 200)
+        else:
+            return make_response({'error': 'post not found'}, 404)
+
+    elif request.method == 'PATCH':
+        post = Post.query.filter(Post.id == id).first()
+        try:
+            get_json = request.get_json()
+            if post:
+                for attr in get_json:
+                    setattr(post, attr, get_json.get(attr))
+                db.session.add(post)
+                db.session.commit()
+                return make_response(post.to_dict(rules=("-user_posts", "-post_hobbies")), 202)
+            else:
+                return make_response({'error': 'post not found'}, 404)
+        except:
+            return make_response({'errors': 'validation errors'}, 400)
+
+    elif request.method == 'DELETE':
+        post = Post.query.filter(Post.id == id).first()
+        if post:
+            db.session.delete(post)
+            db.session.commit()
+            return make_response({}, 204)
+        else:
+            return make_response({'error': 'post not found'}, 404)
+        
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
