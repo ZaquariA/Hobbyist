@@ -17,7 +17,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
-app.secret_key = "\xe6\xaf\xfb\xfc.\x01I'\x1bG\xb5\x1e\xa4`!\xf0"
 
 # Define metadata, instantiate db
 metadata = MetaData(naming_convention={

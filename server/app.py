@@ -1,8 +1,9 @@
 from flask import Flask, request, make_response, session
 from flask_migrate import Migrate
-from flask_restful import Api, Resource
 from models import *
 import os
+
+
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATABASE = os.environ.get(
@@ -13,8 +14,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
-migrate = Migrate(app, db)
+app.secret_key = "\xe6\xaf\xfb\xfc.\x01I'\x1bG\xb5\x1e\xa4`!\xf0"
 
+
+migrate = Migrate(app, db)
 db.init_app(app)
 
 
@@ -39,13 +42,17 @@ def signup():
         user = User(
             username=get_json['username'],
             name=get_json['name'],
+            email=get_json['email'],
+            password=get_json['password'],
+            image=get_json['image'],
+            bio=get_json['bio']
         )
         user.password_hash = get_json['password']
         db.session.add(user)
         db.session.commit()
         session['user_id'] = user.id
 
-        return make_response(user.to_dict(), 201)
+        return make_response(user.to_dict(rules = ('-user_hobbies', '-user_posts')), 201)
 
     except Exception as e:
         return make_response({'errors': str(e)}, 422)

@@ -18,6 +18,7 @@ if __name__ == '__main__':
         print("Seeding User...")
         users = [
             User(
+                username= "Bobby bob",
                 name= "Bob",
                 email= "Zaq@gmail.com",
                 password= "123zaq",
