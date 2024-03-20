@@ -6,6 +6,7 @@ import Home from "./Home"
 import FrontPage from "./FrontPage"
 import Hobby from "./Hobbies"
 import Post from "./Posts"
+import SubmitPost from "./SubmitPost";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route exact path="/home" component={Home} />
           <Route exact path="/hobbies" component={Hobby} />
           <Route exact path="/posts" component={Post}/>
+          <Route exact path="/submit-post" component={SubmitPost}/>
         </Switch>
       </div>
     </Router>

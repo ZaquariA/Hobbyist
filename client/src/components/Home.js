@@ -1,8 +1,12 @@
 import React from "react"
+import { Link } from "react-router-dom";
 
 function Home() {
     return (
-        <h1>This is the home page!</h1>
+        <div>
+            <h1>This is the home page!</h1>
+            <Link to="/submit-post">Submit a post</Link>
+        </div>
     )
 }
 

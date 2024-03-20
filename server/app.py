@@ -250,6 +250,46 @@ def post_by_id(id):
         else:
             return make_response({'error': 'post not found'}, 404)
         
+@app.route('/userhobbies', methods=["GET", "POST"])
+def userhobbies():
+    if request.method == "GET":
+        userhobby_list = [userhobby.to_dict(rules=("-user.user_hobbies", "-hobby.user_hobbies")) for userhobby in UserHobby.query.all()]
+        return make_response(userhobby_list, 200)
+
+    elif request.method == "POST":
+        get_json = request.get_json()
+        try:
+            new_userhobby = UserHobby(
+                user_id=get_json["user_id"],
+                hobby_id=get_json["hobby_id"]
+            )
+            db.session.add(new_userhobby)
+            db.session.commit()
+            return make_response(new_userhobby.to_dict(rules=("-user.user_hobbies", "-hobby.user_hobbies")), 201)
+        except:
+            return make_response({
+                "errors": "validation errors"
+            }, 400)
+
+
+@app.route('/userhobbies/<int:id>', methods=['GET', 'DELETE'])
+def userhobby_by_id(id):
+    if request.method == 'GET':
+        userhobby = UserHobby.query.filter(UserHobby.id == id).first()
+        if userhobby:
+            return make_response(userhobby.to_dict(rules=("-user.user_hobbies", "-hobby.user_hobbies")), 200)
+        else:
+            return make_response({'error': 'userhobby not found'}, 404)
+
+    elif request.method == 'DELETE':
+        userhobby = UserHobby.query.filter(UserHobby.id == id).first()
+        if userhobby:
+            db.session.delete(userhobby)
+            db.session.commit()
+            return make_response({}, 204)
+        else:
+            return make_response({'error': 'userhobby not found'}, 404)
+        
 @app.route('/userposts', methods=["GET", "POST"])
 def userposts():
     if request.method == "GET":
