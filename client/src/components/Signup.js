@@ -73,12 +73,18 @@ function Signup() {
             type="text"
             value={username}
             onChange={handleUsernameChange}
+            maxLength={16}
           />
         </label>
         <br />
         <label>
           Name:
-          <input type="text" value={name} onChange={handleNameChange} />
+          <input 
+            type="text" 
+            value={name} 
+            onChange={handleNameChange} 
+            maxLength={16}
+        />
         </label>
         <br />
         <label>
