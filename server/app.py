@@ -250,6 +250,46 @@ def post_by_id(id):
         else:
             return make_response({'error': 'post not found'}, 404)
         
+@app.route('/userposts', methods=["GET", "POST"])
+def userposts():
+    if request.method == "GET":
+        userpost_list = [userpost.to_dict(rules=("-user.user_posts", "-post.user_posts")) for userpost in UserPost.query.all()]
+        return make_response(userpost_list, 200)
+
+    elif request.method == "POST":
+        get_json = request.get_json()
+        try:
+            new_userpost = UserPost(
+                user_id=get_json["user_id"],
+                post_id=get_json["post_id"]
+            )
+            db.session.add(new_userpost)
+            db.session.commit()
+            return make_response(new_userpost.to_dict(rules=("-user.user_posts", "-post.user_posts")), 201)
+        except:
+            return make_response({
+                "errors": "validation errors"
+            }, 400)
+
+
+@app.route('/userposts/<int:id>', methods=['GET', 'DELETE'])
+def userpost_by_id(id):
+    if request.method == 'GET':
+        userpost = UserPost.query.filter(UserPost.id == id).first()
+        if userpost:
+            return make_response(userpost.to_dict(rules=("-user.user_posts", "-post.user_posts")), 200)
+        else:
+            return make_response({'error': 'userpost not found'}, 404)
+
+    elif request.method == 'DELETE':
+        userpost = UserPost.query.filter(UserPost.id == id).first()
+        if userpost:
+            db.session.delete(userpost)
+            db.session.commit()
+            return make_response({}, 204)
+        else:
+            return make_response({'error': 'userpost not found'}, 404)
+        
 
 @app.route('/posthobbies', methods=["GET", "POST"])
 def posthobbies():
